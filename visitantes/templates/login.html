@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17324d">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='gotuplas.png') }}">
+    <title>Acceso al sistema | GOTUPLAS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="login-page">
+    <main class="login-card">
+        <a class="brand login-brand" href="/" aria-label="GOTUPLAS">
+            <img class="brand-logo" src="{{ url_for('static', filename='gotuplas.png') }}"
+                 alt="">
+            <span class="brand-copy">
+                <small>Control de visitantes</small>
+            </span>
+        </a>
+        <p class="eyebrow">ÁREA PRIVADA</p>
+        <h1>Acceso al sistema</h1>
+        <p class="page-subtitle">Use la misma cuenta para visitantes e ingreso/salida; cada sistema aplica sus propios permisos.</p>
+
+        {% if administrador_creado %}
+        <div class="login-success" role="status">
+            La cuenta de administración fue creada. Inicie sesión con sus nuevas credenciales.
+        </div>
+        {% endif %}
+        {% if error %}
+        <div class="login-error" role="alert">{{ error }}</div>
+        {% endif %}
+        {% if account_configured %}
+        <form method="post" action="{{ url_for('iniciar_sesion') }}" class="login-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="field">
+                <label for="usuario">Usuario</label>
+                <input id="usuario" name="usuario" type="text" autocomplete="username"
+                       value="{{ request.form.get('usuario', '') }}" required autofocus>
+            </div>
+            <div class="field">
+                <label for="clave">Contraseña</label>
+                <input id="clave" name="clave" type="password" autocomplete="current-password"
+                       minlength="6" required>
+            </div>
+            <button class="button button-primary" type="submit">Ingresar</button>
+        </form>
+        {% else %}
+        <p class="setup-notice">Esta aplicación todavía no tiene una cuenta de recepción.</p>
+        <a class="button button-primary setup-link" href="{{ url_for('configurar_cuenta_recepcion') }}">
+            Crear cuenta de recepción
+        </a>
+        {% endif %}
+
+        <a class="back-link" href="/">← Volver al registro de visitante</a>
+    </main>
+</body>
+</html>

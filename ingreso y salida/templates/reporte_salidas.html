@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registro de entrada y salida del personal | {{ fecha }}</title>
+    <style>
+        @page {
+            size: letter portrait;
+            margin: 8mm;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            color: #111;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .print-toolbar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin: 0 auto 12px;
+            max-width: 196mm;
+            padding: 10px 0;
+        }
+        .print-toolbar button {
+            padding: 9px 14px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font: inherit;
+        }
+        .sheet {
+            width: 196mm;
+            min-height: 255mm;
+            margin: 0 auto 12mm;
+            page-break-after: always;
+        }
+        .sheet:last-child { page-break-after: auto; }
+        .document-header {
+            display: grid;
+            grid-template-columns: 1fr 64mm;
+            border: 1px solid #111;
+        }
+        .title-block {
+            display: grid;
+            align-content: center;
+            justify-items: center;
+            padding: 5mm 3mm;
+            text-align: center;
+        }
+        .document-title {
+            margin: 0 0 5mm;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .procedure-title {
+            margin: 0;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .controlled-document {
+            margin-top: 3mm;
+            font-size: 8px;
+        }
+        .metadata {
+            display: grid;
+            grid-template-rows: repeat(4, 1fr);
+            border-left: 1px solid #111;
+        }
+        .metadata div {
+            display: flex;
+            align-items: center;
+            min-height: 8mm;
+            padding: 1mm 2mm;
+            border-bottom: 1px solid #111;
+            font-size: 10px;
+        }
+        .metadata div:last-child { border-bottom: 0; }
+        .instructions {
+            margin: 2mm 0 1.5mm;
+            font-size: 9px;
+            font-weight: 700;
+        }
+        .report-table-wrap {
+            max-width: 100%;
+            overflow-x: auto;
+            overscroll-behavior-inline: contain;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        th, td {
+            border: 1px solid #111;
+            padding: 1mm .7mm;
+            overflow-wrap: anywhere;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 7px;
+        }
+        th {
+            height: 9mm;
+            background: #e8e8e8;
+            font-size: 7px;
+            font-weight: 700;
+        }
+        td { height: 7.3mm; }
+        .number { width: 5%; }
+        .date { width: 10%; }
+        .name { width: 16%; }
+        .document { width: 10%; }
+        .position { width: 12%; }
+        .departure-time { width: 9%; }
+        .return-time { width: 14%; }
+        .signature { width: 11%; }
+        .reason { width: 13%; }
+        .signature-image {
+            display: block;
+            width: 100%;
+            height: 6.5mm;
+            object-fit: contain;
+        }
+        @media print {
+            .print-toolbar { display: none; }
+            .report-table-wrap { overflow: visible; }
+            table { min-width: 0 !important; }
+            .sheet {
+                width: auto;
+                min-height: 0;
+                margin: 0;
+            }
+        }
+        @media screen and (max-width: 800px) {
+            .print-toolbar, .sheet { width: calc(100% - 24px); }
+            .sheet { min-height: 0; margin-bottom: 20px; }
+            .document-header { grid-template-columns: minmax(0, 1fr); }
+            .title-block { padding: 18px 12px; }
+            .document-title { font-size: clamp(13px, 4vw, 17px); }
+            .procedure-title { font-size: 9px; }
+            .metadata {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-rows: none;
+                border-top: 1px solid #111;
+                border-left: 0;
+            }
+            .metadata div {
+                min-height: 34px;
+                border-right: 1px solid #111;
+                font-size: 9px;
+            }
+            .metadata div:nth-child(2n) { border-right: 0; }
+            .metadata div:nth-child(-n+2) { border-bottom: 1px solid #111; }
+            .instructions { line-height: 1.45; }
+            table { min-width: 760px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-toolbar">
+        <button type="button" onclick="window.print()">Imprimir / Guardar como PDF</button>
+    </div>
+    {% for filas in paginas %}
+    <main class="sheet">
+        <header class="document-header">
+            <div class="title-block">
+                <h1 class="document-title">REGISTRO ENTRADA Y SALIDA DEL PERSONAL</h1>
+                <p class="procedure-title">
+                    PO-SST-01 PROCEDIMIENTO DEL SISTEMA DE GESTIÓN DE SEGURIDAD Y SALUD EN EL TRABAJO
+                </p>
+                <span class="controlled-document">DOCUMENTO CONTROLADO</span>
+            </div>
+            <div class="metadata">
+                <div>Código: FO-SST-06</div>
+                <div>Versión: 01</div>
+                <div>Emisión: 27-ene-2023</div>
+                <div>Página {{ loop.index }} de {{ paginas|length }}</div>
+            </div>
+        </header>
+        <p class="instructions">
+            Fecha del registro: {{ fecha }} — Este documento debe ser diligenciado por todo el personal
+            que salga de las instalaciones de la Empresa durante su turno de trabajo.
+        </p>
+        <div class="report-table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th class="number">No.</th>
+                    <th class="date">Fecha</th>
+                    <th class="name">Nombres y apellidos</th>
+                    <th class="document">Cédula</th>
+                    <th class="position">Cargo</th>
+                    <th class="departure-time">Hora salida</th>
+                    <th class="return-time">Fecha y hora entrada</th>
+                    <th class="signature">Firma</th>
+                    <th class="reason">Motivo de salida</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in filas %}
+                <tr>
+                    <td>{{ fila.numero }}</td>
+                    <td>{{ fila.fecha }}</td>
+                    <td>{{ fila.nombre }}</td>
+                    <td>{{ fila.documento }}</td>
+                    <td>{{ fila.cargo }}</td>
+                    <td>{{ fila.hora_salida }}</td>
+                    <td>
+                        {% if fila.fecha_regreso %}
+                        {{ fila.fecha_regreso }}<br>{{ fila.hora_regreso }}
+                        {% if fila.regreso_regularizado %}
+                        <br><small>
+                            {% if fila.regreso_confirmado %}
+                            Hora confirmada mediante regularización
+                            {% else %}
+                            Cierre administrativo: hora no confirmada
+                            {% endif %}
+                            · {{ fila.regreso_regularizado_por }}
+                        </small>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if fila.firma %}
+                        <img class="signature-image"
+                             src="data:image/png;base64,{{ fila.firma }}"
+                             alt="Firma de {{ fila.nombre }}">
+                        {% endif %}
+                    </td>
+                    <td>{{ fila.motivo }}</td>
+                </tr>
+                {% endfor %}
+                {% for _ in range(25 - filas|length) %}
+                <tr>
+                    {% for _ in range(9) %}<td>&nbsp;</td>{% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </main>
+    {% endfor %}
+</body>
+</html>

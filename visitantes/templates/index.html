@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17324d">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='gotuplas.png') }}">
+    <title>Control de ingreso | GOTUPLAS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+    <div class="public-shell">
+        <header class="public-topbar">
+            <a class="brand" href="/" aria-label="GOTUPLAS, inicio">
+                <img class="brand-logo" src="{{ url_for('static', filename='gotuplas.png') }}"
+                     alt="">
+                <span class="brand-copy">
+                    <small>Registro de visitantes</small>
+                </span>
+            </a>
+            <span class="public-indicator"><span class="status-dot"></span> Recepción  GOTUPLAS</span>
+        </header>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">CONTROL INGRESO VISITANTES · CÓDIGO FO-SG-SST-19 · VERSIÓN 04</p>
+                    <h1>Bienvenido a GOTUPLAS</h1>
+                    <p class="page-subtitle">Para iniciar su registro, ingrese su número de documento.</p>
+                    <aside class="safety-notice" aria-label="Normas de seguridad">
+                        <h2>Normas de seguridad</h2>
+                        <p>Al continuar con el registro, declara que ha leído y comprendido las normas de seguridad y los protocolos de GOTUPLAS, y que los cumplirá durante su permanencia en las instalaciones.</p>
+                    </aside>
+                </div>
+                <div class="header-tag"><span aria-hidden="true"> </span> Registro de visitante</div>
+            </header>
+
+            <section class="view is-visible" id="view-ingreso" aria-labelledby="ingresoTitle">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="ingresoTitle">Identificación</h2>
+                        <p>Si ya nos ha visitado, sus datos se cargarán automáticamente.</p>
+                    </div>
+                    <span class="form-reference">FO-SG-SST-19</span>
+                </div>
+
+                <div class="panel lookup-panel">
+                    <label class="field-label" for="cedula">Número de cédula / documento <span>*</span></label>
+                    <div class="lookup-row">
+                        <div class="input-with-icon">
+                            <span aria-hidden="true">⌕</span>
+                            <input id="cedula" name="cedula" type="text" inputmode="numeric"
+                                   pattern="[0-9]*" autocomplete="off"
+                                   placeholder="Escriba el número de documento"
+                                   aria-describedby="visitorStatus" required autofocus>
+                        </div>
+                        <span class="lookup-hint">Escriba el documento para continuar</span>
+                    </div>
+                    <div class="inline-message" id="visitorStatus" aria-live="polite"></div>
+                </div>
+
+                <form id="entryForm" class="panel entry-form" hidden>
+                    <div class="form-section-title">
+                        <span class="step-number">01</span>
+                        <div>
+                            <h3>Datos del visitante</h3>
+                            <p>Los campos con asterisco son obligatorios.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="categoria">Categoría de visitante <span>*</span></label>
+                            <select id="categoria" name="categoria" required>
+                                <option value="">Seleccione una categoría</option>
+                                <option value="Visitantes">Visitante</option>
+                                <option value="Proveedores y contratistas">Proveedor y contratista</option>
+                                <option value="Clientes">Cliente</option>
+                                <option value="Candidatos o aspirantes">Candidato o aspirante</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="nombre">Nombre completo <span>*</span></label>
+                            <input id="nombre" name="nombre" type="text" autocomplete="name" required>
+                        </div>
+                        <div class="field">
+                            <label for="empresa">Empresa de procedencia <span>*</span></label>
+                            <input id="empresa" name="empresa" type="text" required>
+                        </div>
+                        <div class="field">
+                            <label for="arl">ARL <span>*</span></label>
+                            <input id="arl" name="arl" type="text" required>
+                        </div>
+                        <div class="field">
+                            <label for="eps">EPS <span>*</span></label>
+                            <input id="eps" name="eps" type="text" required>
+                        </div>
+                        <div class="field">
+                            <label for="telefono">Teléfono / celular <span>*</span></label>
+                            <input id="telefono" name="telefono" type="tel" autocomplete="tel" required>
+                        </div>
+                        <div class="field">
+                            <label for="personaVisita">Persona a quien visita <span>*</span></label>
+                            <input id="personaVisita" name="persona_visita" type="text" required>
+                        </div>
+                    </div>
+
+                    <div class="form-section-title equipment-title">
+                        <span class="step-number">02</span>
+                        <div>
+                            <h3>Equipos o herramientas</h3>
+                            <p>Registre marca, referencia y serie para el control de salida.</p>
+                        </div>
+                        <button class="button button-secondary add-equipment" type="button" id="addEquipment">
+                            <span aria-hidden="true">＋</span> Agregar equipo
+                        </button>
+                    </div>
+
+                    <div class="table-wrap equipment-table-wrap">
+                        <table class="data-table equipment-table">
+                            <thead>
+                                <tr>
+                                    <th>Marca</th>
+                                    <th>Referencia</th>
+                                    <th>Número de serie</th>
+                                    <th><span class="sr-only">Acciones</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="equipmentRows"></tbody>
+                        </table>
+                        <div class="empty-equipment" id="emptyEquipment">
+                            No se han agregado equipos. Este campo puede dejarse vacío.
+                        </div>
+                    </div>
+
+                    <section class="consent-section" aria-labelledby="consentTitle">
+                        <h3 id="consentTitle">Autorizaciones y acuerdos obligatorios</h3>
+                        
+                        <div class="consent-group">
+                            <div class="consent-group-header">
+                                <strong>Tratamiento de datos personales</strong>
+                                <a class="button button-secondary policy-link"
+                                   href="{{ url_for('leer_politica_tratamiento_datos') }}">
+                                    Leer política de datos
+                                </a>
+                            </div>
+                            {% if not politica_disponible %}
+                            <p class="policy-unavailable">
+                                El documento aún no está cargado. Puede continuar con el registro;
+                                recepción podrá cargarlo desde su panel.
+                            </p>
+                            {% endif %}
+                            <label class="consent-check" for="autorizacionDatos">
+                                <input id="autorizacionDatos" name="autorizacion_datos"
+                                       type="checkbox" required>
+                                <span>Autorizo a GOTUPLAS a tratar mis datos personales conforme a su Política de Tratamiento de Datos Personales. *</span>
+                            </label>
+                        </div>
+
+                        <div class="consent-group">
+                            <div class="consent-group-header">
+                                <strong>Acuerdo de confidencialidad</strong>
+                                <a class="button button-secondary policy-link"
+                                   href="{{ url_for('acuerdo_confidencialidad') }}"
+                                   target="_blank" rel="noopener">
+                                    Leer acuerdo de confidencialidad
+                                </a>
+                            </div>
+                            <label class="consent-check" for="acuerdoConfidencialidad">
+                                <input id="acuerdoConfidencialidad" name="acuerdo_confidencialidad"
+                                       type="checkbox" required>
+                                <span>He leído y acepto en su totalidad el <strong>Acuerdo de Confidencialidad para Visitantes</strong> de ABC GOTUPLAS S.A.S. *</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="signature-section" aria-labelledby="signatureTitle">
+                        <div class="signature-heading">
+                            <div>
+                                <h3 id="signatureTitle">✍ Firma del visitante <span>*</span></h3>
+                                <p id="signatureHelp">Firme dentro del recuadro con el dedo o el mouse.</p>
+                            </div>
+                            <button class="button button-secondary" type="button" id="clearSignature">
+                                Borrar firma
+                            </button>
+                        </div>
+                        <canvas id="signatureCanvas" class="signature-canvas"
+                                width="700" height="190" tabindex="0"
+                                aria-label="Área para dibujar la firma del visitante"
+                                aria-describedby="signatureHelp"></canvas>
+                        <p class="signature-hint">
+                            <span aria-hidden="true">↑</span> Use el dedo (táctil) o el cursor del mouse para firmar en el recuadro blanco
+                        </p>
+                    </section>
+
+                    <div class="form-actions">
+                        <p>La fecha y hora de ingreso se registran automáticamente.</p>
+                        <button class="button button-primary" type="submit" id="submitEntry">
+                            Registrar ingreso <span aria-hidden="true">→</span>
+                        </button>
+                    </div>
+                    <div class="form-message" id="entryMessage" aria-live="polite"></div>
+                </form>
+            </section>
+
+            <footer class="page-footer public-footer">
+                <span>GOTUPLAS · Control de visitantes · FO-SG-SST-19 · Versión 04</span>
+                <a href="{{ url_for('iniciar_sesion') }}">Acceso de recepción</a>
+            </footer>
+        </main>
+    </div>
+</body>
+</html>

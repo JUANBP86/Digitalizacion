@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17324d">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='gotuplas.png') }}">
+    <title>Salidas del personal | GOTUPLAS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v=5) }}">
+    <script src="{{ url_for('static', filename='js/asistencia.js', v=4) }}" defer></script>
+</head>
+<body class="auth-page attendance-page">
+    <header class="public-topbar">
+        <div class="public-topbar-inner">
+            <a class="public-brand" href="{{ url_for('salida_instalaciones') }}"
+               aria-label="GOTUPLAS, control de salidas del personal">
+                <img src="{{ url_for('static', filename='gotuplas.png') }}" alt="GOTUPLAS">
+                <span>Registro de Salidas</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="attendance-content">
+        <section class="welcome-section">
+            <div class="welcome-copy">
+                <p class="eyebrow">FORMATO DIGITAL · FO-SST-06</p>
+                <h1>Bienvenido a GOTUPLAS</h1>
+                <p class="welcome-subtitle">
+                    Para registrar su salida, ingrese su número de documento.
+                </p>
+                <div class="safety-notice">
+                    <h2>NORMAS DE SEGURIDAD</h2>
+                    <p>
+                        Todo el personal debe registrar la salida de las instalaciones durante su turno.
+                        Si regresa, registre también su hora de entrada.
+                    </p>
+                </div>
+            </div>
+            <span class="registration-pill">Registro de salida</span>
+        </section>
+
+        <section class="identification-section" aria-labelledby="identificationTitle">
+            <div class="identification-heading">
+                <div>
+                    <h2 id="identificationTitle">Identificación</h2>
+                    <p>Ingrese su documento para consultar su registro de salida.</p>
+                </div>
+                <span class="form-code">FO-SST-06</span>
+            </div>
+            <div class="document-meta-line">
+                <span>PO-SST-01 · Procedimiento de seguridad y salud en el trabajo</span>
+                <span>Versión 01 · Emisión 27-ene-2023</span>
+            </div>
+            <form id="lookupForm" class="form-stack identification-card">
+            <label for="documento">
+                Número de cédula / documento <span class="required-mark">*</span>
+                <input id="documento" name="documento" type="text" maxlength="50" autocomplete="off"
+                       inputmode="numeric" pattern="[0-9]+" title="Ingrese solo números."
+                       placeholder="Escriba el número de documento"
+                       required autofocus>
+            </label>
+            <button class="button button-primary" type="submit">Consultar</button>
+            <p class="identification-hint">Escriba el documento para continuar.</p>
+            </form>
+        </section>
+
+        <section id="employeePanel" class="employee-panel" aria-live="polite" hidden>
+            <h2 id="employeeName"></h2>
+            <p id="employeeDetails" class="muted"></p>
+            <div id="currentMovement" class="movement-status" hidden>
+                <p id="movementStatus" class="attendance-status"></p>
+                <p id="movementDetails" class="muted"></p>
+                <button class="button button-primary" id="returnButton" type="button">
+                    Registrar regreso a las instalaciones
+                </button>
+            </div>
+            <form id="departureForm" class="form-stack" hidden>
+                <label for="motivo">
+                    Motivo de salida
+                    <input id="motivo" name="motivo" maxlength="300" required>
+                </label>
+                <label for="destino">
+                    Destino
+                    <input id="destino" name="destino" maxlength="200" required>
+                </label>
+                <div class="signature-field">
+                    <span class="field-label">Firma del empleado</span>
+                    <p class="muted">Dibuje su firma con el dedo o el mouse.</p>
+                    <canvas id="signatureCanvas" aria-label="Área para dibujar la firma"
+                            width="700" height="180"></canvas>
+                    <button class="button button-secondary" id="clearSignature" type="button">
+                        Borrar firma
+                    </button>
+                </div>
+               
+                <fieldset class="return-choice">
+                    <legend>¿Regresará a las instalaciones durante este turno? <span class="required-mark">*</span></legend>
+                    <label>
+                        <input name="no_regresa" type="radio" value="false" required>
+                        Sí, regresaré
+                    </label>
+                    <label>
+                        <input name="no_regresa" type="radio" value="true">
+                        No regresaré
+                    </label>
+                </fieldset>
+                <button class="button button-primary" type="submit">Registrar salida</button>
+            </form>
+        </section>
+
+        <p id="attendanceMessage" class="form-message" role="status" aria-live="polite"></p>
+        <footer class="attendance-footer">
+            <span>GOTUPLAS · Control de salidas · FO-SST-06</span>
+            <a href="{{ url_for('iniciar_sesion') }}">Acceso administrativo</a>
+        </footer>
+    </main>
+</body>
+</html>

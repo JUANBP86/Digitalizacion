@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17324d">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='gotuplas.png') }}">
+    <title>Administración de usuarios | GOTUPLAS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="public-shell">
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">GOTUPLAS · ADMINISTRACIÓN</p>
+                    <h1>Administración de usuarios</h1>
+                    <p class="page-subtitle">
+                        Las mismas credenciales funcionan en visitantes e ingreso/salida, con permisos por sistema.
+                    </p>
+                </div>
+                <div class="history-actions">
+                    <a class="button button-secondary" href="{{ url_for('recepcion') }}">
+                        Módulo de recepción
+                    </a>
+                    <form method="post" action="{{ url_for('cerrar_sesion') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button class="button button-secondary" type="submit">Cerrar sesión</button>
+                    </form>
+                </div>
+            </header>
+
+            {% if error %}
+            <div class="login-error" role="alert">{{ error }}</div>
+            {% elif mensaje %}
+            <div class="login-success" role="status">{{ mensaje }}</div>
+            {% endif %}
+
+            <section class="view is-visible" aria-labelledby="accountsTitle">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="accountsTitle">
+                            {% if es_administrador %}Cuentas registradas{% else %}Crear administrador{% endif %}
+                        </h2>
+                        <p>
+                            {% if es_administrador %}
+                            Cada persona debe usar sus propias credenciales.
+                            {% else %}
+                            Configure una cuenta independiente para administrar los usuarios.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <form method="post" action="{{ url_for('administrar_usuarios') }}"
+                      class="panel lookup-panel admin-user-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="accion" value="crear">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="usuario">Usuario (3 a 100 caracteres)</label>
+                            <input id="usuario" name="usuario" type="text" minlength="3"
+                                   maxlength="100" autocomplete="username" required autofocus>
+                        </div>
+                        {% if es_administrador %}
+                        <div class="field">
+                            <label for="rol">Tipo de cuenta</label>
+                            <select id="rol" name="rol" required>
+                                <option value="recepcion">Recepción</option>
+                                <option value="administrador">Administración</option>
+                            </select>
+                        </div>
+                        {% endif %}
+                        <div class="field">
+                            <label for="clave">Contraseña (mínimo 6 caracteres)</label>
+                            <input id="clave" name="clave" type="password" minlength="6"
+                                   autocomplete="new-password" required>
+                        </div>
+                        <div class="field">
+                            <label for="confirmar_clave">Confirmar contraseña</label>
+                            <input id="confirmar_clave" name="confirmar_clave" type="password"
+                                   minlength="6" autocomplete="new-password" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="button button-primary" type="submit">
+                            {% if es_administrador %}Crear usuario{% else %}Crear administrador{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            {% if es_administrador %}
+            <section class="view is-visible" aria-labelledby="userListTitle">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="userListTitle">Usuarios</h2>
+                        <p>Las contraseñas no se muestran. Administración en visitantes también administra ingreso/salida; recepción tiene consulta de solo lectura en ese módulo.</p>
+                    </div>
+                </div>
+                <div class="panel table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Permiso en visitantes</th>
+                                <th>Permiso en ingreso/salida</th>
+                                <th>Creada</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cuenta in cuentas %}
+                            <tr>
+                                <td>{{ cuenta.usuario }}</td>
+                                <td>
+                                    {% if cuenta.rol == "administrador" %}Administración{% else %}Recepción{% endif %}
+                                </td>
+                                <td>
+                                    {% if cuenta.rol_ingresos == "admin" %}Administración{% elif cuenta.rol_ingresos == "lectura" %}Solo lectura{% else %}Sin acceso{% endif %}
+                                </td>
+                                <td>{{ cuenta.creado_en.strftime("%Y-%m-%d %H:%M") }}</td>
+                                <td>
+                                    <details>
+                                        <summary>Cambiar contraseña</summary>
+                                        <form method="post" action="{{ url_for('administrar_usuarios') }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                            <input type="hidden" name="accion" value="cambiar_clave">
+                                            <input type="hidden" name="usuario" value="{{ cuenta.usuario }}">
+                                            <div class="field">
+                                                <label for="clave-{{ loop.index }}">Nueva contraseña</label>
+                                                <input id="clave-{{ loop.index }}" name="clave" type="password"
+                                                       minlength="6" autocomplete="new-password" required>
+                                            </div>
+                                            <div class="field">
+                                                <label for="confirmar-clave-{{ loop.index }}">Confirmar contraseña</label>
+                                                <input id="confirmar-clave-{{ loop.index }}" name="confirmar_clave"
+                                                       type="password" minlength="6"
+                                                       autocomplete="new-password" required>
+                                            </div>
+                                            <button class="button button-secondary" type="submit">
+                                                Guardar contraseña
+                                            </button>
+                                        </form>
+                                    </details>
+                                    {% if cuenta.usuario != usuario_actual %}
+                                    <form method="post" action="{{ url_for('administrar_usuarios') }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <input type="hidden" name="accion" value="eliminar">
+                                        <input type="hidden" name="usuario" value="{{ cuenta.usuario }}">
+                                        <button class="button button-secondary" type="submit">
+                                            Eliminar
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    Sesión actual
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4">No hay cuentas registradas.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {% else %}
+            <p class="back-link">
+                Después de crear el administrador, esta sesión se cerrará. Inicie sesión con la nueva cuenta.
+            </p>
+            {% endif %}
+            <footer class="page-footer">GOTUPLAS · Portal de administración</footer>
+        </main>
+    </div>
+</body>
+</html>

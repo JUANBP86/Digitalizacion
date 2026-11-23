@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17324d">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='gotuplas.png') }}">
+    <title>Recepción | GOTUPLAS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/recepcion.js') }}" defer></script>
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" href="/recepcion" aria-label="GOTUPLAS, recepción">
+                <img class="brand-logo" src="{{ url_for('static', filename='gotuplas.png') }}"
+                     alt="">
+                <span class="brand-copy">
+                    <small>Área de recepción</small>
+                </span>
+            </a>
+            <div class="nav-label">GESTIÓN DE VISITANTES</div>
+            <nav class="main-nav" aria-label="Navegación de recepción">
+                <button class="nav-link is-active" type="button" data-view="activos">
+                    <span class="nav-icon" aria-hidden="true">◉</span>
+                    Visitantes activos
+                    <span class="nav-count" id="activeNavCount">0</span>
+                </button>
+                <button class="nav-link" type="button" data-view="historial">
+                    <span class="nav-icon" aria-hidden="true">▤</span>
+                    Historial FO-SG-SST-19
+                </button>
+                <button class="nav-link" type="button" data-view="politica">
+                    <span class="nav-icon" aria-hidden="true">▧</span>
+                    Política de datos
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <span class="status-dot"></span>
+                <span>Sesión privada de recepción</span>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">GOTUPLAS · SEGURIDAD Y SST</p>
+                    <h1>Panel de recepción</h1>
+                    <p class="page-subtitle">Control de ingresos y salidas FO-SG-SST-19 · Versión 04</p>
+                </div>
+                <div class="history-actions">
+                    {% if session.get('rol_usuario') == 'administrador' %}
+                    <a class="button button-secondary"
+                       href="{{ url_for('administrar_usuarios') }}">Administrar usuarios</a>
+                    {% endif %}
+                    {% if puede_configurar_administrador %}
+                    <a class="button button-secondary"
+                       href="{{ url_for('administrar_usuarios') }}">Crear cuenta de administración</a>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('cerrar_sesion') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button class="button button-secondary" type="submit">Cerrar sesión</button>
+                    </form>
+                </div>
+            </header>
+
+            <section class="view is-visible" id="view-activos" aria-labelledby="activosTitle">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="activosTitle">Visitantes activos</h2>
+                        <p>Personas que aún no han registrado su salida de planta.</p>
+                    </div>
+                    <button class="button button-secondary" type="button" id="refreshActive">
+                        Actualizar lista
+                    </button>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">En planta ahora</span>
+                    <strong class="metric-value" id="activeCount">0</strong>
+                    <span class="metric-caption">visitantes con ingreso activo</span>
+                </div>
+                <div class="card-list" id="activeList"></div>
+                <div class="empty-state" id="activeEmpty" hidden>
+                    <span class="empty-icon" aria-hidden="true">✓</span>
+                    <h3>No hay visitantes en planta</h3>
+                    <p>Los ingresos activos aparecerán aquí para registrar su salida.</p>
+                </div>
+                <div class="form-message" id="activeMessage" aria-live="polite"></div>
+            </section>
+
+            <section class="view" id="view-historial" aria-labelledby="historialTitle" hidden>
+                <div class="section-heading">
+                    <div>
+                        <h2 id="historialTitle">Historial de ingresos</h2>
+                        <p>Consulta de registros para auditorías y planes de emergencia.</p>
+                    </div>
+                    <div class="history-actions">
+                        <form class="export-date-form"
+                              action="{{ url_for('exportar_historial') }}" method="get">
+                            <input type="date" name="fecha" class="button button-secondary"
+                                   aria-label="Fecha para exportar" required>
+                            <button class="button button-secondary" type="submit">
+                                Exportar por fecha
+                            </button>
+                        </form>
+                        <a class="button button-secondary" href="{{ url_for('exportar_historial') }}">
+                            Exportar historial
+                        </a>
+                        <button class="button button-secondary" type="button" id="refreshHistory">
+                            Actualizar historial
+                        </button>
+                    </div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Ingresos registrados</span>
+                        <strong class="metric-value" id="historyTotal">0</strong>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Visitantes activos</span>
+                        <strong class="metric-value" id="historyActive">0</strong>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Salidas registradas</span>
+                        <strong class="metric-value" id="historyExited">0</strong>
+                    </div>
+                </div>
+                <div class="panel history-panel">
+                    <div class="history-toolbar">
+                        <div>
+                            <h3>Todos los registros</h3>
+                            <p>El historial conserva los datos capturados al momento del ingreso.</p>
+                        </div>
+                        <label class="search-box" for="historySearch">
+                            <span aria-hidden="true">⌕</span>
+                            <input id="historySearch" type="search"
+                                   placeholder="Buscar visitante, empresa o documento">
+                        </label>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table history-table">
+                            <thead>
+                                <tr>
+                                    <th>Estado</th>
+                                    <th>Ingreso</th>
+                                    <th>Salida</th>
+                                    <th>Visitante</th>
+                                    <th>Documento</th>
+                                    <th>Categoría</th>
+                                    <th>Empresa</th>
+                                    <th>Persona visitada</th>
+                                    <th>ARL / EPS</th>
+                                    <th>Teléfono</th>
+                                    <th>Equipos / herramientas</th>
+                                    <th>Autorización de datos</th>
+                                    <th>Acuerdo PDF</th>
+                                    <th>Firma</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyRows"></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state compact-empty" id="historyEmpty" hidden>
+                        <h3>No hay registros para mostrar</h3>
+                        <p>Cuando se registre un ingreso, aparecerá en esta tabla.</p>
+                    </div>
+                    <div class="empty-state compact-empty" id="historyNoMatches" hidden>
+                        <h3>No se encontraron coincidencias</h3>
+                        <p>Intente buscar por otro nombre, empresa o documento.</p>
+                    </div>
+                </div>
+                <div class="form-message" id="historyMessage" aria-live="polite"></div>
+            </section>
+            <section class="view" id="view-politica" aria-labelledby="politicaTitle" hidden>
+                <div class="section-heading">
+                    <div>
+                        <h2 id="politicaTitle">Política de tratamiento de datos</h2>
+                        <p>Suba el documento PDF que podrán consultar los visitantes al registrarse.</p>
+                    </div>
+                </div>
+                <div class="panel policy-admin-panel">
+                    <p id="policyStatus" class="policy-admin-status">
+                        {% if politica_disponible %}
+                        Hay una política cargada. Si sube otro PDF, reemplazará el documento actual.
+                        {% else %}
+                        Todavía no se ha cargado un documento. Los visitantes pueden registrarse
+                        y verán un aviso mientras el PDF no esté disponible.
+                        {% endif %}
+                    </p>
+                    <a class="button button-secondary policy-link"
+                       href="{{ url_for('politica_tratamiento_datos') }}"
+                       target="_blank" rel="noopener">
+                        Abrir política actual
+                    </a>
+                    <form id="policyUploadForm" class="policy-upload-form"
+                          action="{{ url_for('subir_politica_datos') }}" method="post"
+                          enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <label class="field-label" for="policyFile">Archivo PDF (máximo 10 MB)</label>
+                        <input id="policyFile" name="archivo" type="file"
+                               accept="application/pdf,.pdf" required>
+                        <button class="button button-primary" type="submit" id="uploadPolicy">
+                            Cargar política
+                        </button>
+                    </form>
+                    <div class="form-message" id="policyMessage" aria-live="polite"></div>
+                </div>
+            </section>
+            <footer class="page-footer">GOTUPLAS · Área privada de recepción · FO-SG-SST-19 · Versión 04</footer>
+        </main>
+    </div>
+</body>
+</html>

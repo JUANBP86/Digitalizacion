@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Panel administrativo | Control de personal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v=5) }}">
+    <script src="{{ url_for('static', filename='js/admin.js', v=2) }}" defer></script>
+</head>
+<body data-role="{{ rol }}">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" href="/admin">
+                <span class="brand-mark" aria-hidden="true">CP</span>
+            <span class="brand-copy"><strong>PERSONAL</strong><small>Control de salidas</small></span>
+            </a>
+            <p class="nav-label">GESTIÓN</p>
+            <nav class="main-nav" aria-label="Secciones del panel">
+                <button class="nav-link" type="button" data-view="accesos">
+                    Personal fuera <span class="nav-count" id="activeNavCount">0</span>
+                </button>
+                {% if rol == "admin" %}
+                <button class="nav-link" type="button" data-view="empleados">Empleados</button>
+                <button class="nav-link" type="button" data-view="cuentas">Cuentas de consulta</button>
+                {% endif %}
+                <button class="nav-link" type="button" data-view="historial">Historial</button>
+            </nav>
+            <div class="sidebar-footer">Sesión administrativa segura</div>
+        </aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">SALIDAS DEL PERSONAL DE LAS INSTALACIONES</p>
+                    <h1>{{ "Panel administrativo" if rol == "admin" else "Panel de consulta" }}</h1>
+                    <p class="page-subtitle">Sesión: {{ usuario }}</p>
+                </div>
+                <div class="header-actions">
+                    <a class="button button-secondary" href="{{ url_for('salida_instalaciones') }}">
+                        Enlace de salidas
+                    </a>
+                    <form method="post" action="{{ url_for('cerrar_sesion') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button class="button button-secondary" type="submit">Cerrar sesión</button>
+                    </form>
+                </div>
+            </header>
+
+            <section class="view is-visible" id="view-accesos">
+                <div class="section-heading">
+                    <div>
+                        <h2>Personal fuera de las instalaciones</h2>
+                        <p>Empleados que registraron una salida durante su turno y no han marcado regreso.</p>
+                    </div>
+                    <button class="button button-secondary" id="refreshActive" type="button">
+                        Actualizar
+                    </button>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Personal fuera</span>
+                    <strong class="metric-value" id="activeCount">0</strong>
+                </div>
+                <div class="card-list" id="activeList"></div>
+                <p class="empty-state" id="activeEmpty" hidden>No hay personal fuera de las instalaciones.</p>
+                <p class="form-message" id="activeMessage" aria-live="polite"></p>
+                {% if rol == "admin" %}
+                <dialog class="regularize-dialog" id="regularizeDialog"
+                        aria-labelledby="regularizeTitle">
+                    <form id="regularizeForm" class="form-stack">
+                        <h2 id="regularizeTitle">Regularizar regreso pendiente</h2>
+                        <p id="regularizeEmployee" class="muted"></p>
+                        <p class="alert">
+                            Si no conoce la hora real, deje ese campo vacío. Se cerrará con la hora
+                            actual y quedará identificada como no confirmada. Si conoce la hora,
+                            ingrésela e indique la evidencia que la respalda.
+                        </p>
+                        <label for="realReturnTime">Hora real del regreso (opcional)
+                            <input id="realReturnTime" type="datetime-local">
+                        </label>
+                        <label for="regularizeReason">Motivo del ajuste
+                            <textarea id="regularizeReason" maxlength="500" required></textarea>
+                        </label>
+                        <label for="regularizeEvidence">Evidencia de la hora real
+                            <textarea id="regularizeEvidence" maxlength="500"></textarea>
+                        </label>
+                        <p class="form-message" id="regularizeMessage" role="status"
+                           aria-live="polite"></p>
+                        <div class="regularize-actions">
+                            <button class="button button-secondary" id="cancelRegularize"
+                                    type="button">Cancelar</button>
+                            <button class="button button-primary" type="submit">
+                                Guardar regularización
+                            </button>
+                        </div>
+                    </form>
+                </dialog>
+                {% endif %}
+            </section>
+
+            {% if rol == "admin" %}
+            <section class="view" id="view-empleados" hidden>
+                <div class="section-heading">
+                    <div>
+                        <h2>Empleados</h2>
+                        <p>Agregue y consulte el personal autorizado para usar el enlace de salidas.</p>
+                    </div>
+                </div>
+                <article class="panel">
+                    <h3>Agregar empleado</h3>
+                    <form id="employeeForm" class="form-stack">
+                        <label>Documento
+                            <input name="documento" maxlength="50" required>
+                        </label>
+                        <label>Nombre completo
+                            <input name="nombre" maxlength="150" required>
+                        </label>
+                        <label>Área
+                            <input name="area" maxlength="100" required>
+                        </label>
+                        <label>Cargo
+                            <input name="cargo" maxlength="100" required>
+                        </label>
+                        <button class="button button-primary" type="submit">
+                            Guardar empleado
+                        </button>
+                    </form>
+                    <p class="form-message" id="employeeMessage" aria-live="polite"></p>
+                </article>
+                <div class="panel table-panel">
+                    <h3>Personal registrado</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Documento</th><th>Nombre</th><th>Área</th><th>Cargo</th><th>Estado</th></tr></thead>
+                            <tbody id="employeeRows"></tbody>
+                        </table>
+                    </div>
+                    <p class="empty-state" id="employeeEmpty" hidden>No hay empleados registrados.</p>
+                </div>
+            </section>
+            <section class="view" id="view-cuentas" hidden>
+                <div class="section-heading">
+                    <div>
+                        <h2>Cuentas de consulta</h2>
+                        <p>Cree accesos que pueden ver registros, reportes y exportaciones sin modificar datos.</p>
+                    </div>
+                </div>
+                <article class="panel">
+                    <form id="viewerAccountForm" class="form-stack">
+                        <label for="viewerUsername">Nombre de usuario
+                            <input id="viewerUsername" name="usuario" minlength="3" maxlength="50"
+                                   autocomplete="off" required>
+                        </label>
+                        <label for="viewerPassword">Contraseña inicial (mínimo 12 caracteres)
+                            <input id="viewerPassword" name="clave" type="password" minlength="12"
+                                   autocomplete="new-password" required>
+                        </label>
+                        <p class="muted">
+                            Comparta la contraseña por un medio seguro. La cuenta solo tendrá permisos de lectura.
+                        </p>
+                        <button class="button button-primary" type="submit">Crear cuenta de consulta</button>
+                    </form>
+                    <p class="form-message" id="viewerAccountMessage" aria-live="polite"></p>
+                </article>
+            </section>
+            {% endif %}
+
+            <section class="view" id="view-historial" hidden>
+                <div class="section-heading">
+                    <div>
+                        <h2>Historial de salidas del personal</h2>
+                        <p>Consulte motivo, destino, salida y regreso de cada movimiento.</p>
+                    </div>
+                    <div class="history-actions">
+                        <form class="report-actions" action="{{ url_for('imprimir_reporte') }}"
+                              method="get" target="_blank">
+                            <label for="reportDate">Fecha del formato
+                                <input id="reportDate" name="fecha" type="date" required>
+                            </label>
+                            <button class="button button-primary" type="submit">
+                                Imprimir formato diario
+                            </button>
+                        </form>
+                        <a class="button button-secondary" href="{{ url_for('exportar_historial') }}">
+                            Exportar CSV
+                        </a>
+                        <button class="button button-secondary" id="refreshHistory" type="button">
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <label class="search-label">Buscar
+                        <input id="historySearch" type="search" placeholder="Nombre, documento o área">
+                    </label>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>No.</th><th>Fecha salida</th><th>Nombres y apellidos</th><th>Cédula</th><th>Cargo</th><th>Hora salida</th><th>Fecha y hora entrada</th><th>Auditoría del regreso</th><th>Firma</th><th>Motivo de salida</th><th>Destino</th><th>Estado</th></tr></thead>
+                            <tbody id="historyRows"></tbody>
+                        </table>
+                    </div>
+                    <p class="empty-state" id="historyEmpty" hidden>No hay registros en el historial.</p>
+                    <p class="empty-state" id="historyNoMatches" hidden>No hay coincidencias con la búsqueda.</p>
+                    <p class="form-message" id="historyMessage" aria-live="polite"></p>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
